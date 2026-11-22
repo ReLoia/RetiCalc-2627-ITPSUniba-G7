@@ -3,11 +3,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-static void gestisci_client(Socket client)
+static void gestisci_client(SOCKET client)
 {
-    char riga[DIM_RIGA];
+    char riga[128];
 
-    if (!invia_riga(client, SALUTO))
+    if (!invia_riga(client, "connessione avvenuta"))
         return;
 
     while (ricevi_riga(client, riga, sizeof riga) == 1) {
@@ -23,7 +23,7 @@ static void gestisci_client(Socket client)
         fflush(stdout);
 
         if (risultato == 100) {
-            invia_riga(client, QUIT);
+            invia_riga(client, "QUIT");
             return;
         }
 
@@ -46,8 +46,8 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    Socket listener = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (listener == SOCKET_NON_VALIDO) {
+    SOCKET listener = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (listener == INVALID_SOCKET) {
         fprintf(stderr, "Impossibile creare la socket del server.\n");
         termina_socket();
         return EXIT_FAILURE;
@@ -81,8 +81,8 @@ int main(int argc, char *argv[])
 #else
         socklen_t dimensione = sizeof indirizzo_client;
 #endif
-        Socket client = accept(listener, (struct sockaddr *)&indirizzo_client, &dimensione);
-        if (client == SOCKET_NON_VALIDO) {
+        SOCKET client = accept(listener, (struct sockaddr *)&indirizzo_client, &dimensione);
+        if (client == INVALID_SOCKET) {
             fprintf(stderr, "Errore durante l'accettazione del client.\n");
             continue;
         }

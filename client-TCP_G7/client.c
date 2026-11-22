@@ -4,16 +4,16 @@
 #include <stdlib.h>
 #include <string.h>
 
-static int leggi_input(const char *prompt, char riga[DIM_RIGA])
+static int leggi_input(const char *prompt, char *riga, int capacita)
 {
     for (;;) {
         fputs(prompt, stdout);
         fflush(stdout);
-        if (fgets(riga, DIM_RIGA, stdin) == NULL)
+        if (fgets(riga, capacita, stdin) == NULL)
             return 0;
 
         size_t fine = strcspn(riga, "\n");
-        if (riga[fine] == '\n' || fine < DIM_RIGA - 1) {
+        if (riga[fine] == '\n' || fine < (size_t)(capacita - 1)) {
             if (fine > 0 && riga[fine - 1] == '\r')
                 fine--;
             riga[fine] = '\0';
@@ -30,11 +30,11 @@ static int leggi_input(const char *prompt, char riga[DIM_RIGA])
 
 static int leggi_indirizzo(struct sockaddr_in *indirizzo)
 {
-    char riga[DIM_RIGA];
+    char riga[128];
 
     indirizzo->sin_family = AF_INET;
     for (;;) {
-        if (!leggi_input("IP del server: ", riga))
+        if (!leggi_input("IP del server: ", riga, sizeof riga))
             return 0;
         if (inet_pton(AF_INET, riga, &indirizzo->sin_addr) == 1)
             break;
@@ -43,7 +43,7 @@ static int leggi_indirizzo(struct sockaddr_in *indirizzo)
 
     for (;;) {
         unsigned short porta;
-        if (!leggi_input("Porta del server: ", riga))
+        if (!leggi_input("Porta del server: ", riga, sizeof riga))
             return 0;
         if (leggi_porta(riga, &porta)) {
             indirizzo->sin_port = htons(porta);
@@ -53,16 +53,16 @@ static int leggi_indirizzo(struct sockaddr_in *indirizzo)
     }
 }
 
-static int scambia_messaggi(Socket server)
+static int scambia_messaggi(SOCKET server)
 {
-    char riga[DIM_RIGA];
-    if (ricevi_riga(server, riga, sizeof riga) != 1 || strcmp(riga, SALUTO) != 0) {
+    char riga[128];
+    if (ricevi_riga(server, riga, sizeof riga) != 1 || strcmp(riga, "connessione avvenuta") != 0) {
         fprintf(stderr, "Saluto del server mancante o non valido.\n");
         return EXIT_FAILURE;
     }
     puts(riga);
 
-    while (leggi_input("Inserisci n1 n2 n3: ", riga)) {
+    while (leggi_input("Inserisci n1 n2 n3: ", riga, sizeof riga)) {
         long long numeri[3];
         if (!leggi_numeri(riga, numeri)) {
             puts("Inserisci tre interi a 32 bit separati da spazi.");
@@ -76,7 +76,7 @@ static int scambia_messaggi(Socket server)
         }
 
         puts(riga);
-        if (strcmp(riga, QUIT) == 0)
+        if (strcmp(riga, "QUIT") == 0)
             break;
     }
     return EXIT_SUCCESS;
@@ -95,8 +95,8 @@ int main(void)
         return EXIT_SUCCESS;
     }
 
-    Socket server = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (server == SOCKET_NON_VALIDO) {
+    SOCKET server = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (server == INVALID_SOCKET) {
         fprintf(stderr, "Impossibile creare la socket del client.\n");
         termina_socket();
         return EXIT_FAILURE;

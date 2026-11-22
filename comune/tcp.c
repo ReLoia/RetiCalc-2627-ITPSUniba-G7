@@ -28,7 +28,7 @@ void termina_socket(void)
 #endif
 }
 
-void chiudi_socket(Socket socket)
+void chiudi_socket(SOCKET socket)
 {
 #ifdef _WIN32
     closesocket(socket);
@@ -46,9 +46,9 @@ static int chiamata_interrotta(void)
 #endif
 }
 
-int invia_riga(Socket socket, const char *riga)
+int invia_riga(SOCKET socket, const char *riga)
 {
-    char messaggio[DIM_RIGA];
+    char messaggio[128];
     int lunghezza = snprintf(messaggio, sizeof messaggio, "%s\n", riga);
 
     if (lunghezza < 0 || lunghezza >= (int)sizeof messaggio)
@@ -66,7 +66,7 @@ int invia_riga(Socket socket, const char *riga)
     return 1;
 }
 
-int ricevi_riga(Socket socket, char *riga, size_t capacita)
+int ricevi_riga(SOCKET socket, char *riga, size_t capacita)
 {
     size_t usati = 0;
 
